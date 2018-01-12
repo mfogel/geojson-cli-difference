@@ -77,6 +77,25 @@ test('stream json in awkward chunks', () => {
   })
 })
 
+test.only('subtract encompassing polygon from one polygon', () => {
+  const strIn = toStream(readInStr('polygon-2x2.geojson'))
+  const subtracter = new DifferenceTransform({
+    subtractFiles: [
+      'test/geojson/polygon-20x20.geojson',
+      'test/geojson/polygon-2x2.geojson'
+    ]
+  })
+  const strOut = stream.PassThrough()
+  strIn.pipe(subtracter).pipe(strOut)
+
+  expect.assertions(1)
+  return toString(strOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('feature-collection-empty.geojson')
+    expect(jsonOut).toEqual(jsonExp)
+  })
+})
+
 test.only('subtract one polygon from one polygon', () => {
   const strIn = toStream(readInStr('polygon-20x20.geojson'))
   const subtracter = new DifferenceTransform({

@@ -2,12 +2,15 @@ const fs = require('fs')
 const { Transform } = require('stream')
 const geojsonhint = require('@mapbox/geojsonhint')
 const turfDifference = require('@turf/difference')
+const turfHelpers = require('@turf/helpers')
 const turfReverse = require('turf-reverse')
 
 const subtractGeojsons = (minuend, subtrahends) => {
   if (minuend['coordinates']) {
-    subtrahends.forEach(subtrahend => {
-      minuend = turfReverse(turfDifference(minuend, subtrahend)).geometry
+    subtrahends.some(subtrahend => {
+      minuend = turfDifference(minuend, subtrahend)
+      if (!minuend) return true
+      minuend = turfReverse(minuend).geometry
     })
     return minuend
   }
@@ -78,7 +81,10 @@ class DifferenceTransform extends GeojsonNullTransform {
     const subtrahends = this.subtractFiles.map(file =>
       this.parse(fs.readFileSync(file, 'utf8'))
     )
-    return subtractGeojsons(geojson, subtrahends)
+    let diff = subtractGeojsons(geojson, subtrahends)
+    /* Using an empty FeatureCollection to represent an empty result */
+    if (!diff) diff = turfHelpers.featureCollection([])
+    return diff
   }
 }
 module.exports = { GeojsonNullTransform, DifferenceTransform }
