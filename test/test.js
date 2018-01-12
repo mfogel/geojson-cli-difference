@@ -10,6 +10,20 @@ const readInStream = fn => fs.createReadStream('test/geojson/' + fn, 'utf8')
 const readInStr = fn => fs.readFileSync('test/geojson/' + fn, 'utf8')
 const readInJson = fn => JSON.parse(readInStr(fn))
 
+// TODO: PR to add this to geojson-equality?
+const areGeometryCollectionsEqual = (gc1, gc2) => {
+  if (gc1['type'] !== 'GeometryCollection') return false
+  if (gc2['type'] !== 'GeometryCollection') return false
+  if (!gc1['geometries'] || !gc2['geometries']) return false
+  if (gc1['geometries'].length !== gc2['geometries'].length) return false
+  for (let i = 0; i < gc1['geometries'].length; i++) {
+    if (!turfBooleanEqual(gc1['geometries'][i], gc2['geometries'][i])) {
+      return false
+    }
+  }
+  return true
+}
+
 test('error on invalid json input', () => {
   const streamIn = readInStream('not-json.geojson')
   const nullTransform = new GeojsonNullTransform()
@@ -289,6 +303,43 @@ test('subtract multipolygon from multipolygon to get multipolygon', () => {
   })
 })
 
-test('subtract multiple polygons in different files from one polygon', () => {})
+// TODO: this test fails when
+//       'test/geojson/multipolygon-2x20-adjacent-vertical-stripes.geojson'
+//       is used to do the subtraction. Why?
+test('subtract polygon from geometrycollection to get geometrycollection', () => {
+  const streamIn = readInStream(
+    'geometrycollection-20x20-adjacent-vertical-stripes.geojson'
+  )
+  const subtracter = new DifferenceTransform({
+    subtractFiles: ['test/geojson/polygon-2x20.geojson']
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
 
-test('subtract multiple polygons in different files from multiple polygons', () => {})
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson(
+      'geometrycollection-20x20-missing-vertical-stripe-2x20.geojson'
+    )
+    expect(areGeometryCollectionsEqual(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('subtract geometrycollection from polygon to get polygon', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    subtractFiles: [
+      'test/geojson/geometrycollection-20x20-missing-vertical-stripe-2x20.geojson'
+    ]
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-2x20.geojson')
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+  })
+})

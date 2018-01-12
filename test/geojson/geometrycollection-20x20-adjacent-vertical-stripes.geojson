@@ -1,0 +1,13 @@
+{
+  "type": "GeometryCollection",
+  "geometries": [
+    {
+      "type": "Polygon",
+      "coordinates": [[[-10, -10], [0, -10], [0, 10], [-10, 10], [-10, -10]]]
+    },
+    {
+      "type": "Polygon",
+      "coordinates": [[[0, -10], [10, -10], [10, 10], [0, 10], [0, -10]]]
+    }
+  ]
+}

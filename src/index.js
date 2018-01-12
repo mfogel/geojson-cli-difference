@@ -98,21 +98,39 @@ class DifferenceTransform extends GeojsonNullTransform {
   subtractGeojsons (minuend, subtrahends) {
     if (!this.checkType(minuend['type'], 'minuend')) return minuend
 
-    if (minuend['coordinates']) {
+    if (['Polygon', 'MultiPolygon'].includes(minuend['type'])) {
       subtrahends.some(subtrahend => {
         if (!this.checkType(subtrahend['type'], 'a subtrahend')) return false
-        minuend = turfDifference(minuend, subtrahend)
+
+        if (['Polygon', 'MultiPolygon'].includes(subtrahend['type'])) {
+          minuend = turfDifference(minuend, subtrahend)
+          if (minuend) minuend = turfReverse(minuend).geometry
+        }
+
+        if (subtrahend['type'] === 'Feature') {
+          minuend = this.subtractGeojsons(minuend, [subtrahend['geometry']])
+        }
+
+        if (subtrahend['type'] === 'GeometryCollection') {
+          minuend = this.subtractGeojsons(minuend, subtrahend['geometries'])
+        }
+
         if (!minuend) return true
-        minuend = turfReverse(minuend).geometry
       })
       return minuend
     }
 
-    if (minuend['geometry']) {
+    if (minuend['type'] === 'Feature') {
       minuend['geometry'] = this.subtractGeojsons(
         minuend['geometry'],
         subtrahends
       )
+    }
+
+    if (minuend['type'] === 'GeometryCollection') {
+      minuend['geometries'] = minuend['geometries']
+        .map(geom => this.subtractGeojsons(geom, subtrahends))
+        .filter(geom => geom !== null)
     }
 
     return minuend
