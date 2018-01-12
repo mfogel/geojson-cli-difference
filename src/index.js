@@ -5,23 +5,6 @@ const turfDifference = require('@turf/difference')
 const turfHelpers = require('@turf/helpers')
 const turfReverse = require('turf-reverse')
 
-const subtractGeojsons = (minuend, subtrahends) => {
-  if (minuend['coordinates']) {
-    subtrahends.some(subtrahend => {
-      minuend = turfDifference(minuend, subtrahend)
-      if (!minuend) return true
-      minuend = turfReverse(minuend).geometry
-    })
-    return minuend
-  }
-
-  if (minuend['geometry']) {
-    minuend['geometry'] = subtractGeojsons(minuend['geometry'], subtrahends)
-  }
-
-  return minuend
-}
-
 class GeojsonNullTransform extends Transform {
   constructor (options = {}) {
     const warn = options['warn']
@@ -85,10 +68,54 @@ class DifferenceTransform extends GeojsonNullTransform {
     const subtrahends = this.subtractFiles.map(file =>
       this.parse(fs.readFileSync(file, 'utf8'))
     )
-    let diff = subtractGeojsons(geojson, subtrahends)
+    let diff = this.subtractGeojsons(geojson, subtrahends)
     /* Using an empty FeatureCollection to represent an empty result */
     if (!diff) diff = turfHelpers.featureCollection([])
     return diff
+  }
+
+  checkType (type, from) {
+    if (!type) {
+      this.warn(`JSON object without 'type' set found in ${from}. Ignoring`)
+      return false
+    }
+
+    const operableTypes = [
+      'Feature',
+      'FeatureCollection',
+      'GeometryCollection',
+      'Polygon',
+      'MultiPolygon'
+    ]
+    if (!operableTypes.includes(type)) {
+      this.warn(`Geojson object with type '${type}' found in ${from}. Ignoring`)
+      return false
+    }
+
+    return true
+  }
+
+  subtractGeojsons (minuend, subtrahends) {
+    if (!this.checkType(minuend['type'], 'minuend')) return minuend
+
+    if (minuend['coordinates']) {
+      subtrahends.some(subtrahend => {
+        if (!this.checkType(subtrahend['type'], 'a subtrahend')) return false
+        minuend = turfDifference(minuend, subtrahend)
+        if (!minuend) return true
+        minuend = turfReverse(minuend).geometry
+      })
+      return minuend
+    }
+
+    if (minuend['geometry']) {
+      minuend['geometry'] = this.subtractGeojsons(
+        minuend['geometry'],
+        subtrahends
+      )
+    }
+
+    return minuend
   }
 }
 module.exports = { GeojsonNullTransform, DifferenceTransform }

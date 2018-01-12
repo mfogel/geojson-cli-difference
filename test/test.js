@@ -45,6 +45,75 @@ test('warn on valid json but invalid geojson input', () => {
   })
 })
 
+test('warn on non multipolygon/polygon geometries input', () => {
+  const streamIn = readInStream('point-origin.geojson')
+  const warn = jest.fn()
+  const subtracter = new DifferenceTransform({ warn, subtractFiles: [] })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    expect(warn).toHaveBeenCalled()
+  })
+})
+
+test('error on invalid json in subtrahend', () => {
+  const streamIn = readInStream('polygon-2x2.geojson')
+  const subtracter = new DifferenceTransform({
+    subtractFiles: ['not-json.geojson']
+  })
+  const streamOut = stream.PassThrough()
+
+  const tracker = jest.fn()
+  const onError = () => {
+    tracker()
+    streamOut.end() // error doesn't propogate, must close final stream explicitly
+  }
+
+  streamIn
+    .pipe(subtracter)
+    .on('error', onError)
+    .pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    expect(tracker).toHaveBeenCalled()
+  })
+})
+
+test('warn on valid json but invalid geojson in subtrahend', () => {
+  const streamIn = readInStream('polygon-2x2.geojson')
+  const warn = jest.fn()
+  const subtracter = new DifferenceTransform({
+    warn,
+    subtractFiles: ['test/geojson/json-but-not-geojson.geojson']
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    expect(warn).toHaveBeenCalled()
+  })
+})
+
+test('warn on non multipolygon/polygon geometries in subtrahend', () => {
+  const streamIn = readInStream('json-but-not-geojson.geojson')
+  const warn = jest.fn()
+  const subtracter = new DifferenceTransform({
+    warn,
+    subtractFiles: ['test/geojson/point-origin.geojson']
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    expect(warn).toHaveBeenCalled()
+  })
+})
+
 test('stream json in one chunk', () => {
   const streamIn = readInStream('polygon-20x20.geojson')
   const nullTransform = new GeojsonNullTransform()
