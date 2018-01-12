@@ -15,6 +15,10 @@ const subtractGeojsons = (minuend, subtrahends) => {
     return minuend
   }
 
+  if (minuend['geometry']) {
+    minuend['geometry'] = subtractGeojsons(minuend['geometry'], subtrahends)
+  }
+
   return minuend
 }
 

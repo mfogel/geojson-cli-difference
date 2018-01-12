@@ -77,7 +77,7 @@ test('stream json in awkward chunks', () => {
   })
 })
 
-test.only('subtract encompassing polygon from one polygon', () => {
+test('subtract encompassing polygon from one polygon', () => {
   const strIn = toStream(readInStr('polygon-2x2.geojson'))
   const subtracter = new DifferenceTransform({
     subtractFiles: [
@@ -96,10 +96,58 @@ test.only('subtract encompassing polygon from one polygon', () => {
   })
 })
 
-test.only('subtract one polygon from one polygon', () => {
+test('subtract one polygon from one polygon', () => {
   const strIn = toStream(readInStr('polygon-20x20.geojson'))
   const subtracter = new DifferenceTransform({
     subtractFiles: ['test/geojson/polygon-2x2.geojson']
+  })
+  const strOut = stream.PassThrough()
+  strIn.pipe(subtracter).pipe(strOut)
+
+  expect.assertions(1)
+  return toString(strOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
+    expect(jsonOut).toEqual(jsonExp)
+  })
+})
+
+test('subtract one polygon from one feature polygon', () => {
+  const strIn = toStream(readInStr('feature-polygon-20x20.geojson'))
+  const subtracter = new DifferenceTransform({
+    subtractFiles: ['test/geojson/polygon-2x2.geojson']
+  })
+  const strOut = stream.PassThrough()
+  strIn.pipe(subtracter).pipe(strOut)
+
+  expect.assertions(1)
+  return toString(strOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('feature-polygon-20x20-with-2x2-hole.geojson')
+    expect(jsonOut).toEqual(jsonExp)
+  })
+})
+
+test('subtract one feature polygon from one feature polygon', () => {
+  const strIn = toStream(readInStr('feature-polygon-20x20.geojson'))
+  const subtracter = new DifferenceTransform({
+    subtractFiles: ['test/geojson/feature-polygon-2x2.geojson']
+  })
+  const strOut = stream.PassThrough()
+  strIn.pipe(subtracter).pipe(strOut)
+
+  expect.assertions(1)
+  return toString(strOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('feature-polygon-20x20-with-2x2-hole.geojson')
+    expect(jsonOut).toEqual(jsonExp)
+  })
+})
+
+test('subtract one feature polygon from one polygon', () => {
+  const strIn = toStream(readInStr('polygon-20x20.geojson'))
+  const subtracter = new DifferenceTransform({
+    subtractFiles: ['test/geojson/feature-polygon-2x2.geojson']
   })
   const strOut = stream.PassThrough()
   strIn.pipe(subtracter).pipe(strOut)
