@@ -41,7 +41,10 @@ const readInStr = fn => fs.readFileSync('test/geojson/' + fn, 'utf8')
 const readInJson = fn => JSON.parse(readInStr(fn))
 
 test('stream json in one chunk', () => {
-  const strIn = fs.createReadStream('test/geojson/polygon.geojson', 'utf8')
+  const strIn = fs.createReadStream(
+    'test/geojson/polygon-20x20.geojson',
+    'utf8'
+  )
   const nullTransform = new GeojsonNullTransform()
   const strOut = stream.PassThrough()
   strIn.pipe(nullTransform).pipe(strOut)
@@ -49,13 +52,13 @@ test('stream json in one chunk', () => {
   expect.assertions(1)
   return toString(strOut).then(function (str) {
     const jsonOut = JSON.parse(str)
-    const jsonExp = readInJson('polygon.geojson')
+    const jsonExp = readInJson('polygon-20x20.geojson')
     expect(jsonOut).toEqual(jsonExp)
   })
 })
 
 test('stream json in awkward chunks', () => {
-  const strIn = readInStr('polygon.geojson')
+  const strIn = readInStr('polygon-20x20.geojson')
   const nullTransform = new GeojsonNullTransform()
   const strOut = stream.PassThrough()
   nullTransform.pipe(strOut)
@@ -69,33 +72,27 @@ test('stream json in awkward chunks', () => {
   expect.assertions(1)
   return toString(strOut).then(function (str) {
     const jsonOut = JSON.parse(str)
-    const jsonExp = readInJson('polygon.geojson')
+    const jsonExp = readInJson('polygon-20x20.geojson')
     expect(jsonOut).toEqual(jsonExp)
   })
 })
 
-test('subtract one polygon from one polygon', () => {})
-
-test('subtract multiple polygons in different files from one polygon', () => {})
-
-test('subtract multiple polygons in different files from multiple polygons', () => {})
-
-test.skip('end-to-end general subtract multiple polygons in different files from multiple polygons', () => {
-  const strIn = readInStr('featurecollection-no-bbox.geojson')
-  const adder = new DifferenceTransform()
+test.only('subtract one polygon from one polygon', () => {
+  const strIn = toStream(readInStr('polygon-20x20.geojson'))
+  const subtracter = new DifferenceTransform({
+    subtractFiles: ['test/geojson/polygon-2x2.geojson']
+  })
   const strOut = stream.PassThrough()
-  adder.pipe(strOut)
-
-  // feed the str in in 50 char increments
-  for (let i = 0; i <= strIn.length; i += 50) {
-    adder.write(strIn.substr(i, 50))
-  }
-  adder.end()
+  strIn.pipe(subtracter).pipe(strOut)
 
   expect.assertions(1)
   return toString(strOut).then(function (str) {
     const jsonOut = JSON.parse(str)
-    const jsonExp = readInJson('polygon-with-all-subtracted.geojson') // TODO: file doesn't exist yet
+    const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
     expect(jsonOut).toEqual(jsonExp)
   })
 })
+
+test('subtract multiple polygons in different files from one polygon', () => {})
+
+test('subtract multiple polygons in different files from multiple polygons', () => {})

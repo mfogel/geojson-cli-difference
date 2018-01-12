@@ -25,7 +25,12 @@ require('yargs')
         .example('cat world.geojson | $0 water.geojson > land.geojson'),
     yargs =>
       stdin
-        .pipe(new DifferenceTransform({ warn: getWarn(yargs.silent) }))
+        .pipe(
+          new DifferenceTransform({
+            subtractFiles: yargs.files,
+            warn: getWarn(yargs.silent)
+          })
+        )
         .on('error', onError)
         .pipe(stdout)
   )

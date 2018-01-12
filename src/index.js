@@ -1,13 +1,30 @@
+const fs = require('fs')
 const { Transform } = require('stream')
 const geojsonhint = require('@mapbox/geojsonhint')
-// const turfDifference = require('@turf/difference')
+const turfDifference = require('@turf/difference')
+const turfReverse = require('turf-reverse')
+
+const subtractGeojsons = (minuend, subtrahends) => {
+  if (minuend['coordinates']) {
+    subtrahends.forEach(subtrahend => {
+      minuend = turfReverse(turfDifference(minuend, subtrahend)).geometry
+    })
+    return minuend
+  }
+
+  return minuend
+}
 
 class GeojsonNullTransform extends Transform {
   constructor (options = {}) {
+    const warn = options['warn']
+    delete options['warn']
+
     options['decodeStrings'] = false
     super(options)
-    this.warn = options['warn']
+
     this.input = ''
+    this.warn = warn
   }
 
   _transform (chunk, encoding, callback) {
@@ -18,7 +35,7 @@ class GeojsonNullTransform extends Transform {
   _flush (callback) {
     try {
       let geojson = this.parse(this.input)
-      this.operate(geojson)
+      geojson = this.operate(geojson)
       callback(null, JSON.stringify(geojson))
     } catch (err) {
       callback(err)
@@ -48,8 +65,20 @@ class GeojsonNullTransform extends Transform {
 }
 
 class DifferenceTransform extends GeojsonNullTransform {
+  constructor (options = {}) {
+    const subtractFiles = options['subtractFiles']
+    delete options['subtractFiles']
+
+    super(options)
+
+    this.subtractFiles = subtractFiles
+  }
+
   operate (geojson) {
-    return geojson
+    const subtrahends = this.subtractFiles.map(file =>
+      this.parse(fs.readFileSync(file, 'utf8'))
+    )
+    return subtractGeojsons(geojson, subtrahends)
   }
 }
 module.exports = { GeojsonNullTransform, DifferenceTransform }
