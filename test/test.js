@@ -4,6 +4,7 @@ const fs = require('fs')
 const stream = require('stream')
 const toStream = require('string-to-stream')
 const toString = require('stream-to-string')
+const turfBooleanEqual = require('@turf/boolean-equal')
 const { GeojsonNullTransform, DifferenceTransform } = require('../src/index.js')
 
 test('error on invalid json input', () => {
@@ -108,7 +109,7 @@ test('subtract one polygon from one polygon', () => {
   return toString(strOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
-    expect(jsonOut).toEqual(jsonExp)
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -124,7 +125,7 @@ test('subtract one polygon from one feature polygon', () => {
   return toString(strOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('feature-polygon-20x20-with-2x2-hole.geojson')
-    expect(jsonOut).toEqual(jsonExp)
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -140,7 +141,7 @@ test('subtract one feature polygon from one feature polygon', () => {
   return toString(strOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('feature-polygon-20x20-with-2x2-hole.geojson')
-    expect(jsonOut).toEqual(jsonExp)
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -156,7 +157,65 @@ test('subtract one feature polygon from one polygon', () => {
   return toString(strOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
-    expect(jsonOut).toEqual(jsonExp)
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('subtract one polygon from one polygon to get multipolygon', () => {
+  const strIn = toStream(readInStr('polygon-20x20.geojson'))
+  const subtracter = new DifferenceTransform({
+    subtractFiles: ['test/geojson/polygon-2x20.geojson']
+  })
+  const strOut = stream.PassThrough()
+  strIn.pipe(subtracter).pipe(strOut)
+
+  expect.assertions(1)
+  return toString(strOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson(
+      'multipolygon-20x20-missing-vertical-stripe-2x20.geojson'
+    )
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('subtract multipolygon from polygon to get polygon', () => {
+  const strIn = toStream(readInStr('polygon-20x20.geojson'))
+  const subtracter = new DifferenceTransform({
+    subtractFiles: [
+      'test/geojson/multipolygon-20x20-missing-vertical-stripe-2x20.geojson'
+    ]
+  })
+  const strOut = stream.PassThrough()
+  strIn.pipe(subtracter).pipe(strOut)
+
+  expect.assertions(1)
+  return toString(strOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-2x20.geojson')
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('subtract multipolygon from multipolygon to get multipolygon', () => {
+  const strIn = toStream(
+    readInStr('multipolygon-20x20-adjacent-vertical-stripes.geojson')
+  )
+  const subtracter = new DifferenceTransform({
+    subtractFiles: [
+      'test/geojson/multipolygon-2x20-adjacent-vertical-stripes.geojson'
+    ]
+  })
+  const strOut = stream.PassThrough()
+  strIn.pipe(subtracter).pipe(strOut)
+
+  expect.assertions(1)
+  return toString(strOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson(
+      'multipolygon-20x20-missing-vertical-stripe-2x20.geojson'
+    )
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
