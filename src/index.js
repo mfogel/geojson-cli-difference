@@ -69,50 +69,39 @@ class DifferenceTransform extends GeojsonNullTransform {
       this.parse(fs.readFileSync(file, 'utf8'))
     )
 
-    const checkType = (type, from) => {
-      if (!type) {
-        this.warn(`JSON object without 'type' set found in ${from}. Ignoring`)
-        return false
-      }
-
-      const operableTypes = [
-        'Feature',
-        'FeatureCollection',
-        'GeometryCollection',
-        'Polygon',
-        'MultiPolygon'
-      ]
-      if (!operableTypes.includes(type)) {
+    const checkSimpleType = (type, name) => {
+      if (['Polygon', 'MultiPolygon'].includes(type)) return true
+      else {
         this.warn(
-          `Geojson object with type '${type}' found in ${from}. Ignoring`
+          `${name} includes simple Geojson object of type '${type}'. Ignoring`
         )
         return false
       }
-
-      return true
     }
 
     const subtractGeojsons = (minuend, subtrahends) => {
-      if (!checkType(minuend['type'], 'minuend')) return minuend
+      if (minuend['coordinates']) {
+        if (!checkSimpleType(minuend['type'], 'Minuend')) return minuend
 
-      if (['Polygon', 'MultiPolygon'].includes(minuend['type'])) {
         subtrahends.some(subtrahend => {
-          if (!checkType(subtrahend['type'], 'a subtrahend')) return false
-
-          if (['Polygon', 'MultiPolygon'].includes(subtrahend['type'])) {
+          if (subtrahend['coordinates']) {
+            if (!checkSimpleType(subtrahend['type'], 'A subtrahend')) {
+              return false
+            }
             minuend = turfDifference(minuend, subtrahend)
+            // TODO: PR to turf to get the winding order correct?
             if (minuend) minuend = turfReverse(minuend).geometry
           }
 
-          if (subtrahend['type'] === 'Feature') {
+          if (subtrahend['geometry']) {
             minuend = subtractGeojsons(minuend, [subtrahend['geometry']])
           }
 
-          if (subtrahend['type'] === 'GeometryCollection') {
+          if (subtrahend['geometries']) {
             minuend = subtractGeojsons(minuend, subtrahend['geometries'])
           }
 
-          if (subtrahend['type'] === 'FeatureCollection') {
+          if (subtrahend['features']) {
             minuend = subtractGeojsons(minuend, subtrahend['features'])
           }
 
@@ -121,17 +110,17 @@ class DifferenceTransform extends GeojsonNullTransform {
         return minuend
       }
 
-      if (minuend['type'] === 'Feature') {
+      if (minuend['geometry']) {
         minuend['geometry'] = subtractGeojsons(minuend['geometry'], subtrahends)
       }
 
-      if (minuend['type'] === 'GeometryCollection') {
+      if (minuend['geometries']) {
         minuend['geometries'] = minuend['geometries']
           .map(geom => subtractGeojsons(geom, subtrahends))
           .filter(geom => geom !== null)
       }
 
-      if (minuend['type'] === 'FeatureCollection') {
+      if (minuend['features']) {
         minuend['features'] = minuend['features']
           .map(geom => subtractGeojsons(geom, subtrahends))
           .filter(geom => geom !== null)
