@@ -115,6 +115,10 @@ class DifferenceTransform extends GeojsonNullTransform {
           minuend = this.subtractGeojsons(minuend, subtrahend['geometries'])
         }
 
+        if (subtrahend['type'] === 'FeatureCollection') {
+          minuend = this.subtractGeojsons(minuend, subtrahend['features'])
+        }
+
         if (!minuend) return true
       })
       return minuend
@@ -129,6 +133,12 @@ class DifferenceTransform extends GeojsonNullTransform {
 
     if (minuend['type'] === 'GeometryCollection') {
       minuend['geometries'] = minuend['geometries']
+        .map(geom => this.subtractGeojsons(geom, subtrahends))
+        .filter(geom => geom !== null)
+    }
+
+    if (minuend['type'] === 'FeatureCollection') {
+      minuend['features'] = minuend['features']
         .map(geom => this.subtractGeojsons(geom, subtrahends))
         .filter(geom => geom !== null)
     }

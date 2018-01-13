@@ -24,6 +24,20 @@ const areGeometryCollectionsEqual = (gc1, gc2) => {
   return true
 }
 
+// TODO: PR to add this to geojson-equality?
+const areFeatureCollectionsEqual = (gc1, gc2) => {
+  if (gc1['type'] !== 'FeatureCollection') return false
+  if (gc2['type'] !== 'FeatureCollection') return false
+  if (!gc1['features'] || !gc2['features']) return false
+  if (gc1['features'].length !== gc2['features'].length) return false
+  for (let i = 0; i < gc1['features'].length; i++) {
+    if (!turfBooleanEqual(gc1['features'][i], gc2['features'][i])) {
+      return false
+    }
+  }
+  return true
+}
+
 test('error on invalid json input', () => {
   const streamIn = readInStream('not-json.geojson')
   const nullTransform = new GeojsonNullTransform()
@@ -176,7 +190,7 @@ test('subtract encompassing polygon from one polygon', () => {
   expect.assertions(1)
   return toString(streamOut).then(function (str) {
     const jsonOut = JSON.parse(str)
-    const jsonExp = readInJson('feature-collection-empty.geojson')
+    const jsonExp = readInJson('featurecollection-empty.geojson')
     expect(jsonOut).toEqual(jsonExp)
   })
 })
@@ -331,6 +345,44 @@ test('subtract geometrycollection from polygon to get polygon', () => {
   const subtracter = new DifferenceTransform({
     subtractFiles: [
       'test/geojson/geometrycollection-20x20-missing-vertical-stripe-2x20.geojson'
+    ]
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-2x20.geojson')
+    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('subtract polygon from featurecollection to get featurecollection', () => {
+  const streamIn = readInStream(
+    'featurecollection-20x20-adjacent-vertical-stripes.geojson'
+  )
+  const subtracter = new DifferenceTransform({
+    subtractFiles: ['test/geojson/polygon-2x20.geojson']
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson(
+      'featurecollection-20x20-missing-vertical-stripe-2x20.geojson'
+    )
+    expect(areFeatureCollectionsEqual(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('subtract featurecollection from polygon to get polygon', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    subtractFiles: [
+      'test/geojson/featurecollection-20x20-missing-vertical-stripe-2x20.geojson'
     ]
   })
   const streamOut = stream.PassThrough()
