@@ -3,7 +3,7 @@ const { Transform } = require('stream')
 const geojsonhint = require('@mapbox/geojsonhint')
 const turfDifference = require('@turf/difference')
 const turfHelpers = require('@turf/helpers')
-const turfReverse = require('turf-reverse')
+const turfRewind = require('@turf/rewind')
 
 class GeojsonNullTransform extends Transform {
   constructor (options = {}) {
@@ -92,8 +92,11 @@ class DifferenceTransform extends GeojsonNullTransform {
               return false
             }
             minuend = turfDifference(minuend, subtrahend)
-            // TODO: PR to turf to get the winding order correct?
-            if (minuend) minuend = turfReverse(minuend).geometry
+            /* turfDifference returns a Feature or null, with backwards winding */
+            /* turfRewind sets winding to be RFC-compliant */
+            if (minuend) {
+              minuend = turfRewind(minuend, { mutate: true }).geometry
+            }
           }
 
           if (subtrahend['geometry']) {

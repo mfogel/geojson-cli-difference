@@ -3,6 +3,7 @@
 const fs = require('fs')
 const stream = require('stream')
 const toString = require('stream-to-string')
+const turfBooleanClockwise = require('@turf/boolean-clockwise')
 const { GeojsonNullTransform, DifferenceTransform } = require('../src/index.js')
 
 const GeojsonEquality = require('geojson-equality')
@@ -212,6 +213,22 @@ test('subtract one polygon from one polygon', () => {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
     expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('ensure correct winding order on output', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    filesToSubtract: ['test/geojson/polygon-2x2.geojson']
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(2)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    expect(turfBooleanClockwise(jsonOut.coordinates[0])).toBeFalsy()
+    expect(turfBooleanClockwise(jsonOut.coordinates[1])).toBeTruthy()
   })
 })
 
