@@ -338,15 +338,35 @@ test('subtract multipolygon from multipolygon to get multipolygon', () => {
   })
 })
 
-// TODO: this test fails when
-//       'test/geojson/multipolygon-2x20-adjacent-vertical-stripes.geojson'
-//       is used to do the subtraction. Why?
 test('subtract polygon from geometrycollection to get geometrycollection', () => {
   const streamIn = readInStream(
     'geometrycollection-20x20-adjacent-vertical-stripes.geojson'
   )
   const subtracter = new DifferenceTransform({
     filesToSubtract: ['test/geojson/polygon-2x20.geojson']
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson(
+      'geometrycollection-20x20-missing-vertical-stripe-2x20.geojson'
+    )
+    expect(areGeometryCollectionsEqual(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+/* https://github.com/Turfjs/turf/issues/1224 */
+test.skip('subtract multipolygon from geometrycollection to get geometrycollection', () => {
+  const streamIn = readInStream(
+    'geometrycollection-20x20-adjacent-vertical-stripes.geojson'
+  )
+  const subtracter = new DifferenceTransform({
+    filesToSubtract: [
+      'test/geojson/multipolygon-2x20-adjacent-vertical-stripes.geojson'
+    ]
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
