@@ -68,82 +68,84 @@ class DifferenceTransform extends GeojsonNullTransform {
     const subtrahends = this.subtractFiles.map(file =>
       this.parse(fs.readFileSync(file, 'utf8'))
     )
-    let diff = this.subtractGeojsons(geojson, subtrahends)
-    /* Using an empty FeatureCollection to represent an empty result */
-    if (!diff) diff = turfHelpers.featureCollection([])
-    return diff
-  }
 
-  checkType (type, from) {
-    if (!type) {
-      this.warn(`JSON object without 'type' set found in ${from}. Ignoring`)
-      return false
+    const checkType = (type, from) => {
+      if (!type) {
+        this.warn(`JSON object without 'type' set found in ${from}. Ignoring`)
+        return false
+      }
+
+      const operableTypes = [
+        'Feature',
+        'FeatureCollection',
+        'GeometryCollection',
+        'Polygon',
+        'MultiPolygon'
+      ]
+      if (!operableTypes.includes(type)) {
+        this.warn(
+          `Geojson object with type '${type}' found in ${from}. Ignoring`
+        )
+        return false
+      }
+
+      return true
     }
 
-    const operableTypes = [
-      'Feature',
-      'FeatureCollection',
-      'GeometryCollection',
-      'Polygon',
-      'MultiPolygon'
-    ]
-    if (!operableTypes.includes(type)) {
-      this.warn(`Geojson object with type '${type}' found in ${from}. Ignoring`)
-      return false
-    }
+    const subtractGeojsons = (minuend, subtrahends) => {
+      if (!checkType(minuend['type'], 'minuend')) return minuend
 
-    return true
-  }
+      if (['Polygon', 'MultiPolygon'].includes(minuend['type'])) {
+        subtrahends.some(subtrahend => {
+          if (!checkType(subtrahend['type'], 'a subtrahend')) return false
 
-  subtractGeojsons (minuend, subtrahends) {
-    if (!this.checkType(minuend['type'], 'minuend')) return minuend
+          if (['Polygon', 'MultiPolygon'].includes(subtrahend['type'])) {
+            minuend = turfDifference(minuend, subtrahend)
+            if (minuend) minuend = turfReverse(minuend).geometry
+          }
 
-    if (['Polygon', 'MultiPolygon'].includes(minuend['type'])) {
-      subtrahends.some(subtrahend => {
-        if (!this.checkType(subtrahend['type'], 'a subtrahend')) return false
+          if (subtrahend['type'] === 'Feature') {
+            minuend = subtractGeojsons(minuend, [subtrahend['geometry']])
+          }
 
-        if (['Polygon', 'MultiPolygon'].includes(subtrahend['type'])) {
-          minuend = turfDifference(minuend, subtrahend)
-          if (minuend) minuend = turfReverse(minuend).geometry
-        }
+          if (subtrahend['type'] === 'GeometryCollection') {
+            minuend = subtractGeojsons(minuend, subtrahend['geometries'])
+          }
 
-        if (subtrahend['type'] === 'Feature') {
-          minuend = this.subtractGeojsons(minuend, [subtrahend['geometry']])
-        }
+          if (subtrahend['type'] === 'FeatureCollection') {
+            minuend = subtractGeojsons(minuend, subtrahend['features'])
+          }
 
-        if (subtrahend['type'] === 'GeometryCollection') {
-          minuend = this.subtractGeojsons(minuend, subtrahend['geometries'])
-        }
+          if (!minuend) return true
+        })
+        return minuend
+      }
 
-        if (subtrahend['type'] === 'FeatureCollection') {
-          minuend = this.subtractGeojsons(minuend, subtrahend['features'])
-        }
+      if (minuend['type'] === 'Feature') {
+        minuend['geometry'] = subtractGeojsons(minuend['geometry'], subtrahends)
+      }
 
-        if (!minuend) return true
-      })
+      if (minuend['type'] === 'GeometryCollection') {
+        minuend['geometries'] = minuend['geometries']
+          .map(geom => subtractGeojsons(geom, subtrahends))
+          .filter(geom => geom !== null)
+      }
+
+      if (minuend['type'] === 'FeatureCollection') {
+        minuend['features'] = minuend['features']
+          .map(geom => subtractGeojsons(geom, subtrahends))
+          .filter(geom => geom !== null)
+      }
+
       return minuend
     }
 
-    if (minuend['type'] === 'Feature') {
-      minuend['geometry'] = this.subtractGeojsons(
-        minuend['geometry'],
-        subtrahends
-      )
-    }
+    let diff = subtractGeojsons(geojson, subtrahends)
 
-    if (minuend['type'] === 'GeometryCollection') {
-      minuend['geometries'] = minuend['geometries']
-        .map(geom => this.subtractGeojsons(geom, subtrahends))
-        .filter(geom => geom !== null)
-    }
+    /* Using an empty FeatureCollection to represent an empty result */
+    if (!diff) diff = turfHelpers.featureCollection([])
 
-    if (minuend['type'] === 'FeatureCollection') {
-      minuend['features'] = minuend['features']
-        .map(geom => this.subtractGeojsons(geom, subtrahends))
-        .filter(geom => geom !== null)
-    }
-
-    return minuend
+    return diff
   }
 }
 module.exports = { GeojsonNullTransform, DifferenceTransform }
