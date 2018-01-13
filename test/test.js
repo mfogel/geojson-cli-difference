@@ -3,35 +3,39 @@
 const fs = require('fs')
 const stream = require('stream')
 const toString = require('stream-to-string')
-const turfBooleanEqual = require('@turf/boolean-equal')
 const { GeojsonNullTransform, DifferenceTransform } = require('../src/index.js')
+
+const GeojsonEquality = require('geojson-equality')
+const geojsonEq = new GeojsonEquality()
 
 const readInStream = fn => fs.createReadStream('test/geojson/' + fn, 'utf8')
 const readInStr = fn => fs.readFileSync('test/geojson/' + fn, 'utf8')
 const readInJson = fn => JSON.parse(readInStr(fn))
 
-// TODO: PR to add this to geojson-equality?
+/* NOTE: PR open to add this to geojson-equality
+ *       https://github.com/geosquare/geojson-equality/pull/11 */
 const areGeometryCollectionsEqual = (gc1, gc2) => {
   if (gc1['type'] !== 'GeometryCollection') return false
   if (gc2['type'] !== 'GeometryCollection') return false
   if (!gc1['geometries'] || !gc2['geometries']) return false
   if (gc1['geometries'].length !== gc2['geometries'].length) return false
   for (let i = 0; i < gc1['geometries'].length; i++) {
-    if (!turfBooleanEqual(gc1['geometries'][i], gc2['geometries'][i])) {
+    if (!geojsonEq.compare(gc1['geometries'][i], gc2['geometries'][i])) {
       return false
     }
   }
   return true
 }
 
-// TODO: PR to add this to geojson-equality?
+/* NOTE: PR open to add this to geojson-equality
+ *       https://github.com/geosquare/geojson-equality/pull/10 */
 const areFeatureCollectionsEqual = (gc1, gc2) => {
   if (gc1['type'] !== 'FeatureCollection') return false
   if (gc2['type'] !== 'FeatureCollection') return false
   if (!gc1['features'] || !gc2['features']) return false
   if (gc1['features'].length !== gc2['features'].length) return false
   for (let i = 0; i < gc1['features'].length; i++) {
-    if (!turfBooleanEqual(gc1['features'][i], gc2['features'][i])) {
+    if (!geojsonEq.compare(gc1['features'][i], gc2['features'][i])) {
       return false
     }
   }
@@ -207,7 +211,7 @@ test('subtract one polygon from one polygon', () => {
   return toString(streamOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -223,7 +227,7 @@ test('subtract one polygon from one feature polygon', () => {
   return toString(streamOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('feature-polygon-20x20-with-2x2-hole.geojson')
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -239,7 +243,7 @@ test('subtract one feature polygon from one feature polygon', () => {
   return toString(streamOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('feature-polygon-20x20-with-2x2-hole.geojson')
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -255,7 +259,7 @@ test('subtract one feature polygon from one polygon', () => {
   return toString(streamOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -273,7 +277,7 @@ test('subtract one polygon from one polygon to get multipolygon', () => {
     const jsonExp = readInJson(
       'multipolygon-20x20-missing-vertical-stripe-2x20.geojson'
     )
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -291,7 +295,7 @@ test('subtract multipolygon from polygon to get polygon', () => {
   return toString(streamOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('polygon-2x20.geojson')
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -313,7 +317,7 @@ test('subtract multipolygon from multipolygon to get multipolygon', () => {
     const jsonExp = readInJson(
       'multipolygon-20x20-missing-vertical-stripe-2x20.geojson'
     )
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -354,7 +358,7 @@ test('subtract geometrycollection from polygon to get polygon', () => {
   return toString(streamOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('polygon-2x20.geojson')
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -392,6 +396,6 @@ test('subtract featurecollection from polygon to get polygon', () => {
   return toString(streamOut).then(function (str) {
     const jsonOut = JSON.parse(str)
     const jsonExp = readInJson('polygon-2x20.geojson')
-    expect(turfBooleanEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
