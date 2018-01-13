@@ -76,7 +76,7 @@ test('warn on valid json but invalid geojson input', () => {
 test('warn on non multipolygon/polygon geometries input', () => {
   const streamIn = readInStream('point-origin.geojson')
   const warn = jest.fn()
-  const subtracter = new DifferenceTransform({ warn, subtractFiles: [] })
+  const subtracter = new DifferenceTransform({ warn, filesToSubtract: [] })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
 
@@ -89,7 +89,7 @@ test('warn on non multipolygon/polygon geometries input', () => {
 test('error on invalid json in subtrahend', () => {
   const streamIn = readInStream('polygon-2x2.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: ['not-json.geojson']
+    filesToSubtract: ['not-json.geojson']
   })
   const streamOut = stream.PassThrough()
 
@@ -115,7 +115,7 @@ test('warn on valid json but invalid geojson in subtrahend', () => {
   const warn = jest.fn()
   const subtracter = new DifferenceTransform({
     warn,
-    subtractFiles: ['test/geojson/json-but-not-geojson.geojson']
+    filesToSubtract: ['test/geojson/json-but-not-geojson.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -131,7 +131,7 @@ test('warn on non multipolygon/polygon geometries in subtrahend', () => {
   const warn = jest.fn()
   const subtracter = new DifferenceTransform({
     warn,
-    subtractFiles: ['test/geojson/point-origin.geojson']
+    filesToSubtract: ['test/geojson/point-origin.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -179,7 +179,7 @@ test('stream json in awkward chunks', () => {
 test('subtract encompassing polygon from one polygon', () => {
   const streamIn = readInStream('polygon-2x2.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: [
+    filesToSubtract: [
       'test/geojson/polygon-20x20.geojson',
       'test/geojson/polygon-2x2.geojson'
     ]
@@ -198,7 +198,7 @@ test('subtract encompassing polygon from one polygon', () => {
 test('subtract one polygon from one polygon', () => {
   const streamIn = readInStream('polygon-20x20.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: ['test/geojson/polygon-2x2.geojson']
+    filesToSubtract: ['test/geojson/polygon-2x2.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -214,7 +214,7 @@ test('subtract one polygon from one polygon', () => {
 test('subtract one polygon from one feature polygon', () => {
   const streamIn = readInStream('feature-polygon-20x20.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: ['test/geojson/polygon-2x2.geojson']
+    filesToSubtract: ['test/geojson/polygon-2x2.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -230,7 +230,7 @@ test('subtract one polygon from one feature polygon', () => {
 test('subtract one feature polygon from one feature polygon', () => {
   const streamIn = readInStream('feature-polygon-20x20.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: ['test/geojson/feature-polygon-2x2.geojson']
+    filesToSubtract: ['test/geojson/feature-polygon-2x2.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -246,7 +246,7 @@ test('subtract one feature polygon from one feature polygon', () => {
 test('subtract one feature polygon from one polygon', () => {
   const streamIn = readInStream('polygon-20x20.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: ['test/geojson/feature-polygon-2x2.geojson']
+    filesToSubtract: ['test/geojson/feature-polygon-2x2.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -262,7 +262,7 @@ test('subtract one feature polygon from one polygon', () => {
 test('subtract one polygon from one polygon to get multipolygon', () => {
   const streamIn = readInStream('polygon-20x20.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: ['test/geojson/polygon-2x20.geojson']
+    filesToSubtract: ['test/geojson/polygon-2x20.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -280,7 +280,7 @@ test('subtract one polygon from one polygon to get multipolygon', () => {
 test('subtract multipolygon from polygon to get polygon', () => {
   const streamIn = readInStream('polygon-20x20.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: [
+    filesToSubtract: [
       'test/geojson/multipolygon-20x20-missing-vertical-stripe-2x20.geojson'
     ]
   })
@@ -300,7 +300,7 @@ test('subtract multipolygon from multipolygon to get multipolygon', () => {
     'multipolygon-20x20-adjacent-vertical-stripes.geojson'
   )
   const subtracter = new DifferenceTransform({
-    subtractFiles: [
+    filesToSubtract: [
       'test/geojson/multipolygon-2x20-adjacent-vertical-stripes.geojson'
     ]
   })
@@ -325,7 +325,7 @@ test('subtract polygon from geometrycollection to get geometrycollection', () =>
     'geometrycollection-20x20-adjacent-vertical-stripes.geojson'
   )
   const subtracter = new DifferenceTransform({
-    subtractFiles: ['test/geojson/polygon-2x20.geojson']
+    filesToSubtract: ['test/geojson/polygon-2x20.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -343,7 +343,7 @@ test('subtract polygon from geometrycollection to get geometrycollection', () =>
 test('subtract geometrycollection from polygon to get polygon', () => {
   const streamIn = readInStream('polygon-20x20.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: [
+    filesToSubtract: [
       'test/geojson/geometrycollection-20x20-missing-vertical-stripe-2x20.geojson'
     ]
   })
@@ -363,7 +363,7 @@ test('subtract polygon from featurecollection to get featurecollection', () => {
     'featurecollection-20x20-adjacent-vertical-stripes.geojson'
   )
   const subtracter = new DifferenceTransform({
-    subtractFiles: ['test/geojson/polygon-2x20.geojson']
+    filesToSubtract: ['test/geojson/polygon-2x20.geojson']
   })
   const streamOut = stream.PassThrough()
   streamIn.pipe(subtracter).pipe(streamOut)
@@ -381,7 +381,7 @@ test('subtract polygon from featurecollection to get featurecollection', () => {
 test('subtract featurecollection from polygon to get polygon', () => {
   const streamIn = readInStream('polygon-20x20.geojson')
   const subtracter = new DifferenceTransform({
-    subtractFiles: [
+    filesToSubtract: [
       'test/geojson/featurecollection-20x20-missing-vertical-stripe-2x20.geojson'
     ]
   })

@@ -49,26 +49,27 @@ class GeojsonNullTransform extends Transform {
   }
 
   operate (geojson) {
-    // makes for easy testing
+    /* pass through for testing */
     return geojson
   }
 }
 
 class DifferenceTransform extends GeojsonNullTransform {
   constructor (options = {}) {
-    const subtractFiles = options['subtractFiles']
-    delete options['subtractFiles']
+    const filesToSubtract = options['filesToSubtract']
+    delete options['filesToSubtract']
 
     super(options)
 
-    this.subtractFiles = subtractFiles
+    this.filesToSubtract = filesToSubtract
   }
 
   operate (geojson) {
-    const subtrahends = this.subtractFiles.map(file =>
+    const subtrahends = this.filesToSubtract.map(file =>
       this.parse(fs.readFileSync(file, 'utf8'))
     )
 
+    /* helper to skip over lines, points when recursing */
     const checkSimpleType = (type, name) => {
       if (['Polygon', 'MultiPolygon'].includes(type)) return true
       else {
@@ -79,6 +80,8 @@ class DifferenceTransform extends GeojsonNullTransform {
       }
     }
 
+    /* helper to recursively walk down minuend, subtrahends, subtracting
+     * subtrahends from minuend as we go down */
     const subtractGeojsons = (minuend, subtrahends) => {
       if (minuend['coordinates']) {
         if (!checkSimpleType(minuend['type'], 'Minuend')) return minuend
@@ -131,7 +134,7 @@ class DifferenceTransform extends GeojsonNullTransform {
 
     let diff = subtractGeojsons(geojson, subtrahends)
 
-    /* Using an empty FeatureCollection to represent an empty result */
+    /* using an empty FeatureCollection to represent an empty result */
     if (!diff) diff = turfHelpers.featureCollection([])
 
     return diff

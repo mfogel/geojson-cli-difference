@@ -27,7 +27,7 @@ require('yargs')
       stdin
         .pipe(
           new DifferenceTransform({
-            subtractFiles: yargs.files,
+            filesToSubtract: yargs.files,
             warn: getWarn(yargs.silent)
           })
         )
