@@ -13,11 +13,12 @@ const getWarn = silent => (silent ? () => {} : console.warn)
 
 require('yargs')
   .command(
-    '$0 <files..>',
+    '$0 [files..]',
     'Subtract polygons/multipolygons in <files> from stdin',
     yargs =>
       yargs
         .check(({ files }) => {
+          if (files === undefined) return true
           files.forEach(file => fs.accessSync(file, fs.constants.R_OK))
           return true
         })
@@ -27,7 +28,7 @@ require('yargs')
       stdin
         .pipe(
           new DifferenceTransform({
-            filesToSubtract: yargs.files,
+            filesToSubtract: yargs.files || [],
             warn: getWarn(yargs.silent)
           })
         )

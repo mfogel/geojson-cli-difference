@@ -25,6 +25,10 @@ Send any warnings (normally written to `stderr`) straight to `/dev/null`.
 
 ## Changelog
 
+### Master
+
+* Allow calling without any geojson features to subtract
+
 ### 0.1
 
 * Initial release
