@@ -13,36 +13,6 @@ const readInStream = fn => fs.createReadStream('test/geojson/' + fn, 'utf8')
 const readInStr = fn => fs.readFileSync('test/geojson/' + fn, 'utf8')
 const readInJson = fn => JSON.parse(readInStr(fn))
 
-/* NOTE: PR open to add this to geojson-equality
- *       https://github.com/geosquare/geojson-equality/pull/11 */
-const areGeometryCollectionsEqual = (gc1, gc2) => {
-  if (gc1['type'] !== 'GeometryCollection') return false
-  if (gc2['type'] !== 'GeometryCollection') return false
-  if (!gc1['geometries'] || !gc2['geometries']) return false
-  if (gc1['geometries'].length !== gc2['geometries'].length) return false
-  for (let i = 0; i < gc1['geometries'].length; i++) {
-    if (!geojsonEq.compare(gc1['geometries'][i], gc2['geometries'][i])) {
-      return false
-    }
-  }
-  return true
-}
-
-/* NOTE: PR open to add this to geojson-equality
- *       https://github.com/geosquare/geojson-equality/pull/10 */
-const areFeatureCollectionsEqual = (gc1, gc2) => {
-  if (gc1['type'] !== 'FeatureCollection') return false
-  if (gc2['type'] !== 'FeatureCollection') return false
-  if (!gc1['features'] || !gc2['features']) return false
-  if (gc1['features'].length !== gc2['features'].length) return false
-  for (let i = 0; i < gc1['features'].length; i++) {
-    if (!geojsonEq.compare(gc1['features'][i], gc2['features'][i])) {
-      return false
-    }
-  }
-  return true
-}
-
 test('error on invalid json input', () => {
   const streamIn = readInStream('not-json.geojson')
   const nullTransform = new GeojsonNullTransform()
@@ -354,7 +324,7 @@ test('subtract polygon from geometrycollection to get geometrycollection', () =>
     const jsonExp = readInJson(
       'geometrycollection-20x20-missing-vertical-stripe-2x20.geojson'
     )
-    expect(areGeometryCollectionsEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -377,7 +347,7 @@ test.skip('subtract multipolygon from geometrycollection to get geometrycollecti
     const jsonExp = readInJson(
       'geometrycollection-20x20-missing-vertical-stripe-2x20.geojson'
     )
-    expect(areGeometryCollectionsEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
@@ -415,7 +385,7 @@ test('subtract polygon from featurecollection to get featurecollection', () => {
     const jsonExp = readInJson(
       'featurecollection-20x20-missing-vertical-stripe-2x20.geojson'
     )
-    expect(areFeatureCollectionsEqual(jsonOut, jsonExp)).toBeTruthy()
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
   })
 })
 
