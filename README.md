@@ -11,11 +11,16 @@ $ cat world.geojson | geojson-cli-difference water.geojson > land.geojson
 
 ## Usage
 
-A geojson file containing only polgons and/or multipolygons is expected via `stdin`.
+A geojson object containing polygons and/or multipolygons is expected via `stdin`. This will be the [minuend](https://en.wiktionary.org/wiki/minuend).
 
-One or more geojson files containing only polygons and/or multipolygons are expected as positional arguments.
+Zero or more [subtrahends](https://en.wiktionary.org/wiki/subtrahend) are expected to be specified via positional arguments. Each positional argument may be either
 
-To `stdout` will be written a geojson file containing the result of subtracting the polygons/multipolygons supplied via positional arguments from those provided via `stdin`.
+* a path to a geojson file containing polygons and/or multipolygons
+* a path to a directory full of geojson files containing polygons and/or multipolygons
+
+The result of performing the subtraction will be written to `stdout` as a geojson object.
+
+If no subtrahends are specifed, the minuend will be passed through from `stdin` to `stdout` unchanged.
 
 ## Options
 
@@ -27,7 +32,8 @@ Send any warnings (normally written to `stderr`) straight to `/dev/null`.
 
 ### Master
 
-* Allow calling without any geojson features to subtract
+* Allow paths to directories full of geojson files to be used as subtrahends to be given as positional arguemnts
+* Allow no-op: calling without specifying any subtrahends
 
 ### 0.1
 

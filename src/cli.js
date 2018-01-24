@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
 const { stdin, stdout, exit } = require('process')
-const { DifferenceTransform } = require('./index.js')
+const { checkPath, DifferenceTransform } = require('./index.js')
 
 const onError = err => {
   console.error(`Error: ${err.message}`)
@@ -11,15 +10,17 @@ const onError = err => {
 
 const getWarn = silent => (silent ? () => {} : console.warn)
 
+const flatPaths = []
+
 require('yargs')
   .command(
-    '$0 [files..]',
-    'Subtract polygons/multipolygons in <files> from stdin',
+    '$0 [paths..]',
+    'Subtract polygons/multipolygons in <paths> from stdin',
     yargs =>
       yargs
-        .check(({ files }) => {
-          if (files === undefined) return true
-          files.forEach(file => fs.accessSync(file, fs.constants.R_OK))
+        .check(({ paths }) => {
+          if (paths === undefined) return true
+          paths.forEach(path => checkPath(path, flatPaths))
           return true
         })
         .epilog('Input is read from stdin, output is written to stdout')
@@ -28,7 +29,7 @@ require('yargs')
       stdin
         .pipe(
           new DifferenceTransform({
-            filesToSubtract: yargs.files || [],
+            filesToSubtract: flatPaths,
             warn: getWarn(yargs.silent)
           })
         )
