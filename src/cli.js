@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { stdin, stdout, exit } = require('process')
-const { checkPath, DifferenceTransform } = require('./index.js')
+const { flattenPath, DifferenceTransform } = require('./index.js')
 
 const onError = err => {
   console.error(`Error: ${err.message}`)
@@ -20,7 +20,7 @@ require('yargs')
       yargs
         .check(({ paths }) => {
           if (paths === undefined) return true
-          paths.forEach(path => checkPath(path, flatPaths))
+          paths.forEach(path => flattenPath(path, flatPaths))
           return true
         })
         .epilog('Input is read from stdin, output is written to stdout')

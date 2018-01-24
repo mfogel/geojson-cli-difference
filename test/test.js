@@ -5,7 +5,7 @@ const stream = require('stream')
 const toString = require('stream-to-string')
 const turfBooleanClockwise = require('@turf/boolean-clockwise')
 const {
-  checkPath,
+  flattenPath,
   GeojsonNullTransform,
   DifferenceTransform
 } = require('../src/index.js')
@@ -411,7 +411,7 @@ test('subtract featurecollection from polygon to get polygon', () => {
   })
 })
 
-test('checkPath complies flatten paths from file and directory paths', () => {
+test('flattenPath complies flatten paths from file and directory paths', () => {
   const filePath = 'test/geojson/polygon-20x20.geojson'
   const dirPath = 'test/geojson/dir'
 
@@ -422,23 +422,13 @@ test('checkPath complies flatten paths from file and directory paths', () => {
     'test/geojson/dir/polygon-2x20.geojson'
   ]
 
-  checkPath(filePath, flatPaths)
-  checkPath(dirPath, flatPaths)
+  flattenPath(filePath, flatPaths)
+  flattenPath(dirPath, flatPaths)
   expect(flatPaths).toEqual(expectedFlatPaths)
 })
 
-test('checkPath throws error on non-existent file', () => {
+test('flattenPath throws error on non-existent file', () => {
   const path = 'test/geojson/does-not-exist'
 
-  expect(() => checkPath(path, [])).toThrow()
-})
-
-test('checkPath throws error on existent but non-readable file', () => {
-  /* Can't check an un-readable file into git, so changing perms on the fly */
-  const path = 'test/geojson/not-readable'
-
-  const orgStat = fs.statSync(path)
-  fs.chmodSync(path, '0200')
-  expect(() => checkPath(path, [])).toThrow()
-  fs.chmodSync(path, orgStat.mode)
+  expect(() => flattenPath(path, [])).toThrow()
 })

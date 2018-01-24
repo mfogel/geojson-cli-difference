@@ -5,27 +5,18 @@ const turfDifference = require('@turf/difference')
 const turfHelpers = require('@turf/helpers')
 const turfRewind = require('@turf/rewind')
 
-/* Check each path is readable and fill in the flatPaths arguement
- * by flattening out directory contents and files given.
+/* If path is to a file, it will be added to flatPaths.
  *
- * Input paths can be either to a geojson file or a directory of
- * geojson files */
-const checkPath = (path, flatPaths) => {
+ * If path is to a directory, all of its contents will be
+ * each added to flatPaths.
+ */
+const flattenPath = (path, flatPaths) => {
   try {
     const stat = fs.statSync(path)
     if (stat.isDirectory()) {
       const filenames = fs.readdirSync(path)
-      filenames.forEach(fn => {
-        const pathToFile = `${path}/${fn}`
-        try {
-          fs.accessSync(pathToFile, fs.constants.R_OK)
-        } catch (err) {
-          throw new Error(`Error checking ${pathToFile}: ${err.message}`)
-        }
-        flatPaths.push(pathToFile)
-      })
+      filenames.forEach(fn => flatPaths.push(`${path}/${fn}`))
     } else {
-      fs.accessSync(path, fs.constants.R_OK)
       flatPaths.push(path)
     }
   } catch (err) {
@@ -171,4 +162,4 @@ class DifferenceTransform extends GeojsonNullTransform {
     return diff
   }
 }
-module.exports = { checkPath, GeojsonNullTransform, DifferenceTransform }
+module.exports = { flattenPath, GeojsonNullTransform, DifferenceTransform }
