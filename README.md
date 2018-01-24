@@ -32,6 +32,7 @@ Send any warnings (normally written to `stderr`) straight to `/dev/null`.
 
 ### Master
 
+* Allow paths to directories full of geojson files to be used as subtrahends to be given as positional arguemnts
 * Allow no-op: calling without specifying any subtrahends
 
 ### 0.1

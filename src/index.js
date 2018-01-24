@@ -5,6 +5,34 @@ const turfDifference = require('@turf/difference')
 const turfHelpers = require('@turf/helpers')
 const turfRewind = require('@turf/rewind')
 
+/* Check each path is readable and fill in the flatPaths arguement
+ * by flattening out directory contents and files given.
+ *
+ * Input paths can be either to a geojson file or a directory of
+ * geojson files */
+const checkPath = (path, flatPaths) => {
+  try {
+    const stat = fs.statSync(path)
+    if (stat.isDirectory()) {
+      const filenames = fs.readdirSync(path)
+      filenames.forEach(fn => {
+        const pathToFile = `${path}/${fn}`
+        try {
+          fs.accessSync(pathToFile, fs.constants.R_OK)
+        } catch (err) {
+          throw new Error(`Error checking ${pathToFile}: ${err.message}`)
+        }
+        flatPaths.push(pathToFile)
+      })
+    } else {
+      fs.accessSync(path, fs.constants.R_OK)
+      flatPaths.push(path)
+    }
+  } catch (err) {
+    throw new Error(`Error cheking ${path}: ${err.message}`)
+  }
+}
+
 class GeojsonNullTransform extends Transform {
   constructor (options = {}) {
     const warn = options['warn']
@@ -24,7 +52,7 @@ class GeojsonNullTransform extends Transform {
 
   _flush (callback) {
     try {
-      let geojson = this.parse(this.input)
+      let geojson = this.parse(this.input, 'stdin')
       geojson = this.operate(geojson)
       callback(null, JSON.stringify(geojson))
     } catch (err) {
@@ -32,17 +60,17 @@ class GeojsonNullTransform extends Transform {
     }
   }
 
-  parse (str) {
+  parse (str, from) {
     let geojson
     try {
       geojson = JSON.parse(str)
     } catch (err) {
-      throw new SyntaxError(`Unable to parse input as JSON: ${err.message}`)
+      throw new SyntaxError(`Unable to parse JSON from ${from}: ${err.message}`)
     }
 
     const errors = geojsonhint.hint(geojson)
     errors.forEach(e =>
-      this.warn(`Warning: Input is not valid GeoJSON: ${e.message}`)
+      this.warn(`Warning: JSON from ${from} is not valid GeoJSON: ${e.message}`)
     )
 
     return geojson
@@ -66,7 +94,7 @@ class DifferenceTransform extends GeojsonNullTransform {
 
   operate (geojson) {
     const subtrahends = this.filesToSubtract.map(file =>
-      this.parse(fs.readFileSync(file, 'utf8'))
+      this.parse(fs.readFileSync(file, 'utf8'), file)
     )
 
     /* helper to skip over lines, points when recursing */
@@ -143,4 +171,4 @@ class DifferenceTransform extends GeojsonNullTransform {
     return diff
   }
 }
-module.exports = { GeojsonNullTransform, DifferenceTransform }
+module.exports = { checkPath, GeojsonNullTransform, DifferenceTransform }
