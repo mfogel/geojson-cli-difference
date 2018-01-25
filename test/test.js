@@ -5,6 +5,8 @@ const stream = require('stream')
 const toString = require('stream-to-string')
 const turfBooleanClockwise = require('@turf/boolean-clockwise')
 const {
+  bboxRegex,
+  bboxOverlap,
   flattenPath,
   GeojsonNullTransform,
   DifferenceTransform
@@ -431,4 +433,150 @@ test('flattenPath throws error on non-existent file', () => {
   const path = 'test/geojson/does-not-exist'
 
   expect(() => flattenPath(path, [])).toThrow()
+})
+
+test('respect bboxes in filenames - positive whole numbers - base case ignore bbox', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    filesToSubtract: [
+      'test/geojson/bbox-wrong-positive-whole.[50,60,70,80].geojson'
+    ]
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('respect bboxes in filenames - positive whole numbers - respect bbox', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    filesToSubtract: [
+      'test/geojson/bbox-wrong-positive-whole.[50,60,70,80].geojson'
+    ],
+    respectBboxesInFilenames: true
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-20x20.geojson')
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('respect bboxes in filenames - negative decimal numbers - base case ignore bbox', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    filesToSubtract: [
+      'test/geojson/bbox-wrong-negative-decimal.[-121.2,-121.2,-111.11,-111.11].geojson'
+    ]
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('respect bboxes in filenames - negative decimal numbers - respect bbox', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    filesToSubtract: [
+      'test/geojson/bbox-wrong-negative-decimal.[-121.2,-121.2,-111.11,-111.11].geojson'
+    ],
+    respectBboxesInFilenames: true
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-20x20.geojson')
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('respect bboxes in filenames - subtrahend files without bboxes unaffected', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    filesToSubtract: ['test/geojson/polygon-2x2.geojson'],
+    respectBboxesInFilenames: true
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('respect bboxes in filenames - subtrahend files with overlapping bboxes', () => {
+  const streamIn = readInStream('polygon-20x20.geojson')
+  const subtracter = new DifferenceTransform({
+    filesToSubtract: ['test/geojson/bbox-right.[-1,-1,1,1].geojson'],
+    respectBboxesInFilenames: true
+  })
+  const streamOut = stream.PassThrough()
+  streamIn.pipe(subtracter).pipe(streamOut)
+
+  expect.assertions(1)
+  return toString(streamOut).then(function (str) {
+    const jsonOut = JSON.parse(str)
+    const jsonExp = readInJson('polygon-20x20-with-2x2-hole.geojson')
+    expect(geojsonEq.compare(jsonOut, jsonExp)).toBeTruthy()
+  })
+})
+
+test('bbox regex misses', () => {
+  expect(bboxRegex.test('')).toBeFalsy()
+  expect(bboxRegex.test('[]')).toBeFalsy()
+  expect(bboxRegex.test('[234]')).toBeFalsy()
+  expect(bboxRegex.test('[,,,]')).toBeFalsy()
+  expect(bboxRegex.test('[a,b,c,]')).toBeFalsy()
+  expect(bboxRegex.test('[-,-,-,]')).toBeFalsy()
+  expect(bboxRegex.test('[-234.34]')).toBeFalsy()
+  expect(bboxRegex.test('[-,4,3,4]')).toBeFalsy()
+})
+
+test('bbox regex hits', () => {
+  expect(bboxRegex.test('[0,0,0,0]')).toBeTruthy()
+  expect(bboxRegex.test('asdf.[0,0,0,0].asdflkj')).toBeTruthy()
+  expect(bboxRegex.test('[-0,-0,-0,-0]')).toBeTruthy()
+  expect(bboxRegex.test('[4.,4,-3,34]')).toBeTruthy()
+  expect(bboxRegex.test('[-2.3,5.4,-2.5,2.3][0,0,0,0]')).toBeTruthy()
+})
+
+test('bbox overlap misses', () => {
+  expect(bboxOverlap([0, 0, 1, 1], [2, 2, 3, 3])).toBeFalsy()
+  expect(bboxOverlap([0, 0, 1, 1], [-4, -4, -3, -3])).toBeFalsy()
+  expect(bboxOverlap([0, 0, 10, 10], [12, 2, 13, 3])).toBeFalsy()
+  expect(bboxOverlap([0, 0, 10, 10], [2, 12, 3, 13])).toBeFalsy()
+})
+
+test('bbox overlap hits', () => {
+  expect(bboxOverlap([0, 0, 10, 10], [2, 2, 3, 3])).toBeTruthy()
+  expect(bboxOverlap([0, 0, 10, 10], [8, 8, 13, 13])).toBeTruthy()
+  expect(bboxOverlap([0, 0, 10, 10], [-8, -8, 13, 13])).toBeTruthy()
+  expect(bboxOverlap([0, 0, 10, 10], [-8, -8, 3, 3])).toBeTruthy()
+})
+
+test('bbox overlap antimeridian', () => {
+  expect(bboxOverlap([175, 0, -175, 1], [2, 2, 3, 3])).toBeFalsy()
+  expect(bboxOverlap([175, 0, -175, 1], [-177, -1, -176, 3])).toBeTruthy()
 })

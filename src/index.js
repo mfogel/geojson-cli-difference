@@ -1,6 +1,7 @@
 const fs = require('fs')
 const { Transform } = require('stream')
 const geojsonhint = require('@mapbox/geojsonhint')
+const turfBbox = require('@turf/bbox')
 const turfDifference = require('@turf/difference')
 const turfHelpers = require('@turf/helpers')
 const turfRewind = require('@turf/rewind')
@@ -22,6 +23,26 @@ const flattenPath = (path, flatPaths) => {
   } catch (err) {
     throw new Error(`Error cheking ${path}: ${err.message}`)
   }
+}
+
+/* Regular expression for matching a bbounding box */
+const numRegex = '-?[0-9]+.?[0-9]*'
+const bboxRegex = RegExp(
+  `\\[${numRegex},${numRegex},${numRegex},${numRegex}\\]`
+)
+
+const bboxOverlap = (bbox1, bbox2) => {
+  let [x1min, y1min, x1max, y1max] = bbox1
+  let [x2min, y2min, x2max, y2max] = bbox2
+
+  /* account for antimeridian cutting
+   * https://tools.ietf.org/html/rfc7946#section-5.2 */
+  if (x1min > x1max) x1min -= 360
+  if (x2min > x2max) x2min -= 360
+
+  if (x2min > x1max || y2min > y1max) return false
+  if (x1min > x2max || y1min > y2max) return false
+  return true
 }
 
 class GeojsonNullTransform extends Transform {
@@ -76,18 +97,16 @@ class GeojsonNullTransform extends Transform {
 class DifferenceTransform extends GeojsonNullTransform {
   constructor (options = {}) {
     const filesToSubtract = options['filesToSubtract']
+    const respectBboxesInFilenames = options['respectBboxesInFilenames']
     delete options['filesToSubtract']
 
     super(options)
 
     this.filesToSubtract = filesToSubtract
+    this.respectBboxesInFilenames = respectBboxesInFilenames
   }
 
   operate (geojson) {
-    const subtrahends = this.filesToSubtract.map(file =>
-      this.parse(fs.readFileSync(file, 'utf8'), file)
-    )
-
     /* helper to skip over lines, points when recursing */
     const checkSimpleType = (type, name) => {
       if (['Polygon', 'MultiPolygon'].includes(type)) return true
@@ -154,6 +173,25 @@ class DifferenceTransform extends GeojsonNullTransform {
       return minuend
     }
 
+    const isBboxPresentWithOverlap = (filename, minuendBbox) => {
+      const reMatch = bboxRegex.exec(filename)
+      if (reMatch === null) return true
+      const subtrahendBbox = JSON.parse(reMatch[0])
+      return bboxOverlap(minuendBbox, subtrahendBbox)
+    }
+
+    /* do the actual work */
+    if (this.respectBboxesInFilenames) {
+      const minuendBbox = turfBbox(geojson)
+      this.filesToSubtract = this.filesToSubtract.filter(fn =>
+        isBboxPresentWithOverlap(fn, minuendBbox)
+      )
+    }
+
+    const subtrahends = this.filesToSubtract.map(file =>
+      this.parse(fs.readFileSync(file, 'utf8'), file)
+    )
+
     let diff = subtractGeojsons(geojson, subtrahends)
 
     /* using an empty FeatureCollection to represent an empty result */
@@ -162,4 +200,10 @@ class DifferenceTransform extends GeojsonNullTransform {
     return diff
   }
 }
-module.exports = { flattenPath, GeojsonNullTransform, DifferenceTransform }
+module.exports = {
+  bboxRegex,
+  bboxOverlap,
+  flattenPath,
+  GeojsonNullTransform,
+  DifferenceTransform
+}

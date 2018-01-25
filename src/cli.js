@@ -30,12 +30,17 @@ require('yargs')
         .pipe(
           new DifferenceTransform({
             filesToSubtract: flatPaths,
+            respectBboxesInFilenames: yargs.respectBboxesInFilenames,
             warn: getWarn(yargs.silent)
           })
         )
         .on('error', onError)
         .pipe(stdout)
   )
+  .option('respect-bboxes-in-filenames', {
+    describe: 'Scan subtrahend filenames for bboxes',
+    boolean: true
+  })
   .option('s', {
     alias: 'silent',
     describe: 'Do not write warnings to stderr',

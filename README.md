@@ -24,6 +24,17 @@ If no subtrahends are specifed, the minuend will be passed through from `stdin` 
 
 ## Options
 
+### `--respect-bboxes-in-filenames`
+
+Scan each subtrahend filename for something that looks like a stringified geojson [bounding box](https://tools.ietf.org/html/rfc7946#section-5). Examples of matching filenames:
+
+* `[-10,-10,10,10].json`
+* `424242.[-58.5314588,-34.705637,-58.3351249,-34.5265535].geojson`
+
+If a bounding box is found in a filename, a comparison is made with the bounding box of the minuend. If there is no overlap, the subtraction process for that subtrahend is short-curcuited, thus avoiding the need to perform the I/O of reading the contents of the file in from disk to memory.
+
+This feature can be used as a performance boost in the case when trying to employ a large number of subtrahends of which only a small percent actually overlap the minuend.
+
 ### `-s` / `--silent`
 
 Send any warnings (normally written to `stderr`) straight to `/dev/null`.
@@ -32,6 +43,7 @@ Send any warnings (normally written to `stderr`) straight to `/dev/null`.
 
 ### Master
 
+* Add option --respect-bboxes-in-filenames
 * Allow paths to directories full of geojson files to be used as subtrahends to be given as positional arguemnts
 * Allow no-op: calling without specifying any subtrahends
 

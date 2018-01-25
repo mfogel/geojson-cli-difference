@@ -21,6 +21,7 @@
   "license": "ISC",
   "dependencies": {
     "@mapbox/geojsonhint": "^2.0.1",
+    "@turf/bbox": "^5.1.5",
     "@turf/difference": "^5.1.5",
     "@turf/helpers": "^6.0.0-beta.3",
     "@turf/rewind": "^5.1.5",
