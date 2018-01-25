@@ -173,6 +173,7 @@ class DifferenceTransform extends GeojsonNullTransform {
       return minuend
     }
 
+    /* helper to test a filename for bbox presence and overlap */
     const isBboxPresentWithOverlap = (filename, minuendBbox) => {
       const reMatch = bboxRegex.exec(filename)
       if (reMatch === null) return true
@@ -180,7 +181,7 @@ class DifferenceTransform extends GeojsonNullTransform {
       return bboxOverlap(minuendBbox, subtrahendBbox)
     }
 
-    /* do the actual work */
+    /* filter down the subtrahends if we're looking for bboxes in filenames */
     if (this.respectBboxesInFilenames) {
       const minuendBbox = turfBbox(geojson)
       this.filesToSubtract = this.filesToSubtract.filter(fn =>
@@ -188,16 +189,28 @@ class DifferenceTransform extends GeojsonNullTransform {
       )
     }
 
-    const subtrahends = this.filesToSubtract.map(file =>
-      this.parse(fs.readFileSync(file, 'utf8'), file)
-    )
+    /* nothing to subtract - but still run it through the process
+     * for warnings if minuend has bad geojson (ex: non-polygon geometries) */
+    if (this.filesToSubtract.length === 0) {
+      geojson = subtractGeojsons(geojson, [])
+    }
 
-    let diff = subtractGeojsons(geojson, subtrahends)
+    /* do the actual subtraction */
+    this.filesToSubtract.every(fileToSubtract => {
+      const subtrahend = this.parse(
+        fs.readFileSync(fileToSubtract, 'utf8'),
+        fileToSubtract
+      )
+      geojson = subtractGeojsons(geojson, [subtrahend])
+      if (!geojson) {
+        /* using an empty FeatureCollection to represent an empty result */
+        geojson = turfHelpers.featureCollection([])
+        return false
+      }
+      return true
+    })
 
-    /* using an empty FeatureCollection to represent an empty result */
-    if (!diff) diff = turfHelpers.featureCollection([])
-
-    return diff
+    return geojson
   }
 }
 module.exports = {
