@@ -1,6 +1,6 @@
 {
   "name": "geojson-cli-difference",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Subtract polygon/multipolygons in your geojson files from each other.",
   "repository": "github:mfogel/geojson-cli-dfference",
   "main": "src/index.js",

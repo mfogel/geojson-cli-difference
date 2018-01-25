@@ -41,7 +41,7 @@ Send any warnings (normally written to `stderr`) straight to `/dev/null`.
 
 ## Changelog
 
-### Master
+### 0.2
 
 * Add option --respect-bboxes-in-filenames
 * Allow paths to directories full of geojson files to be used as subtrahends to be given as positional arguemnts
