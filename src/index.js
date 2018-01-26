@@ -1,10 +1,9 @@
 const fs = require('fs')
 const { Transform } = require('stream')
 const geojsonhint = require('@mapbox/geojsonhint')
+const martinez = require('martinez-polygon-clipping')
 const turfBbox = require('@turf/bbox')
-const turfDifference = require('@turf/difference')
 const turfHelpers = require('@turf/helpers')
-const turfRewind = require('@turf/rewind')
 
 /* If path is to a file, it will be added to flatPaths.
  *
@@ -129,11 +128,28 @@ class DifferenceTransform extends GeojsonNullTransform {
             if (!checkSimpleType(subtrahend['type'], 'A subtrahend')) {
               return false
             }
-            minuend = turfDifference(minuend, subtrahend)
-            /* turfDifference returns a Feature or null, with backwards winding */
-            /* turfRewind sets winding to be RFC-compliant */
-            if (minuend) {
-              minuend = turfRewind(minuend, { mutate: true }).geometry
+
+            /* martinez always returns a coordiantes for a multi-polygon */
+            const coordinates = martinez.diff(
+              minuend.coordinates,
+              subtrahend.coordinates
+            )
+
+            /* martinez gets the winding order of inner rings backwards */
+            coordinates.forEach(polygon => {
+              for (let i = 1; i < polygon.length; i++) {
+                polygon[i] = polygon[i].reverse()
+              }
+            })
+
+            if (coordinates.length === 0) {
+              minuend = null
+            } else if (coordinates.length === 1) {
+              minuend.type = 'Polygon'
+              minuend.coordinates = coordinates[0]
+            } else {
+              minuend.type = 'MultiPolygon'
+              minuend.coordinates = coordinates
             }
           }
 
