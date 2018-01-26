@@ -327,7 +327,7 @@ describe('subtract', () => {
     })
   })
 
-  /* https://github.com/Turfjs/turf/issues/1224 */
+  /* Caused, at least in part, by https://github.com/w8r/martinez/issues/35 */
   test.skip('multipolygon from geometrycollection to get geometrycollection', () => {
     const streamIn = readInStream(
       'geometrycollection-20x20-adjacent-vertical-stripes.geojson'
