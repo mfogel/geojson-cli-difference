@@ -1,6 +1,6 @@
 # geojson-cli-difference
 
-Subtract polygon/multipolygons in your geojson files from each other.
+Subtract Polygons & MultiPolygons in your GeoJSON files from each other.
 
 ## Quickstart
 
