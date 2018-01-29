@@ -245,8 +245,7 @@ describe('subtract', () => {
     })
   })
 
-  /* https://github.com/w8r/martinez/issues/35 */
-  test.skip('one polygon from one polygon to get multipolygon', () => {
+  test('one polygon from one polygon to get multipolygon', () => {
     const streamIn = readInStream('polygon-20x20.geojson')
     const subtracter = new DifferenceTransform({
       filesToSubtract: ['test/geojson/polygon-2x20.geojson']
@@ -264,8 +263,7 @@ describe('subtract', () => {
     })
   })
 
-  /* https://github.com/w8r/martinez/issues/35 */
-  test.skip('multipolygon from polygon to get polygon', () => {
+  test('multipolygon from polygon to get polygon', () => {
     const streamIn = readInStream('polygon-20x20.geojson')
     const subtracter = new DifferenceTransform({
       filesToSubtract: [
@@ -306,8 +304,7 @@ describe('subtract', () => {
     })
   })
 
-  /* https://github.com/w8r/martinez/issues/35 */
-  test.skip('polygon from geometrycollection to get geometrycollection', () => {
+  test('polygon from geometrycollection to get geometrycollection', () => {
     const streamIn = readInStream(
       'geometrycollection-20x20-adjacent-vertical-stripes.geojson'
     )
@@ -350,8 +347,7 @@ describe('subtract', () => {
     })
   })
 
-  /* https://github.com/w8r/martinez/issues/35 */
-  test.skip('geometrycollection from polygon to get polygon', () => {
+  test('geometrycollection from polygon to get polygon', () => {
     const streamIn = readInStream('polygon-20x20.geojson')
     const subtracter = new DifferenceTransform({
       filesToSubtract: [
@@ -369,8 +365,7 @@ describe('subtract', () => {
     })
   })
 
-  /* https://github.com/w8r/martinez/issues/35 */
-  test.skip('polygon from featurecollection to get featurecollection', () => {
+  test('polygon from featurecollection to get featurecollection', () => {
     const streamIn = readInStream(
       'featurecollection-20x20-adjacent-vertical-stripes.geojson'
     )
@@ -390,8 +385,7 @@ describe('subtract', () => {
     })
   })
 
-  /* https://github.com/w8r/martinez/issues/35 */
-  test.skip('featurecollection from polygon to get polygon', () => {
+  test('featurecollection from polygon to get polygon', () => {
     const streamIn = readInStream('polygon-20x20.geojson')
     const subtracter = new DifferenceTransform({
       filesToSubtract: [
