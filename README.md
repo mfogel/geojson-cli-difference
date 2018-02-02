@@ -2,6 +2,10 @@
 
 Subtract Polygons & MultiPolygons in your GeoJSON files from each other.
 
+[![npm version](https://img.shields.io/npm/v/geojson-cli-difference.svg)](https://www.npmjs.com/package/geojson-cli-difference)
+[![build status](https://img.shields.io/travis/mfogel/geojson-cli-difference.svg)](https://travis-ci.org/mfogel/geojson-cli-difference)
+[![test coverage](https://img.shields.io/coveralls/mfogel/geojson-cli-difference/master.svg)](https://coveralls.io/r/mfogel/geojson-cli-difference)
+
 ## Quickstart
 
 ```sh
