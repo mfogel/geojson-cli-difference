@@ -23,7 +23,7 @@
     "@mapbox/geojsonhint": "^2.0.1",
     "@turf/bbox": "^5.1.5",
     "@turf/helpers": "^6.0.0-beta.3",
-    "martinez-polygon-clipping": "git://github.com/mfogel/martinez.git#fix-overlapping-edges-#35",
+    "martinez-polygon-clipping": "git://github.com/mfogel/martinez.git#all-my-fixes",
     "yargs": "^11.0.0"
   },
   "devDependencies": {
