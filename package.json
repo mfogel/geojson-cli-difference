@@ -1,7 +1,7 @@
 {
   "name": "geojson-cli-difference",
-  "version": "0.2.0",
-  "description": "Subtract polygon/multipolygons in your geojson files from each other.",
+  "version": "0.2.1",
+  "description": "Subtract Polygons & MultiPolygons in your GeoJSON files from each other.",
   "repository": "github:mfogel/geojson-cli-dfference",
   "main": "src/index.js",
   "bin": "src/cli.js",
@@ -10,6 +10,7 @@
     "test-debug": "node --inspect-brk node_modules/.bin/jest --runInBand"
   },
   "jest": {
+    "collectCoverage": true,
     "testEnvironment": "node"
   },
   "keywords": [
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@turf/boolean-clockwise": "^5.1.5",
+    "coveralls": "^3.0.0",
     "geojson-equality": "^0.2.0",
     "jest": "^22.1.4",
     "stream-to-string": "^1.1.0"
