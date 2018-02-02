@@ -45,6 +45,11 @@ Send any warnings (normally written to `stderr`) straight to `/dev/null`.
 
 ## Changelog
 
+### 0.2.1
+
+* set up CI: travis, coveralls
+* performance imprv: don't read in all subtrahends at the same time
+
 ### 0.2
 
 * Add option --respect-bboxes-in-filenames
