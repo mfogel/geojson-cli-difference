@@ -281,8 +281,7 @@ describe('subtract', () => {
     })
   })
 
-  /* https://github.com/w8r/martinez/issues/35 */
-  test.skip('multipolygon from multipolygon to get multipolygon', () => {
+  test('multipolygon from multipolygon to get multipolygon', () => {
     const streamIn = readInStream(
       'multipolygon-20x20-adjacent-vertical-stripes.geojson'
     )
@@ -324,8 +323,7 @@ describe('subtract', () => {
     })
   })
 
-  /* Caused, at least in part, by https://github.com/w8r/martinez/issues/35 */
-  test.skip('multipolygon from geometrycollection to get geometrycollection', () => {
+  test('multipolygon from geometrycollection to get geometrycollection', () => {
     const streamIn = readInStream(
       'geometrycollection-20x20-adjacent-vertical-stripes.geojson'
     )

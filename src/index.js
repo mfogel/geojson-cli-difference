@@ -1,7 +1,7 @@
 const fs = require('fs')
 const { Transform } = require('stream')
 const geojsonhint = require('@mapbox/geojsonhint')
-const martinez = require('martinez-polygon-clipping')
+const polygonClipping = require('polygon-clipping')
 const turfBbox = require('@turf/bbox')
 const turfHelpers = require('@turf/helpers')
 
@@ -129,18 +129,11 @@ class DifferenceTransform extends GeojsonNullTransform {
               return false
             }
 
-            /* martinez always returns a coordiantes for a multi-polygon */
-            const coordinates = martinez.diff(
+            /* PC always returns a coordiantes for a multi-polygon */
+            const coordinates = polygonClipping.difference(
               minuend.coordinates,
               subtrahend.coordinates
             )
-
-            /* martinez gets the winding order of inner rings backwards */
-            coordinates.forEach(polygon => {
-              for (let i = 1; i < polygon.length; i++) {
-                polygon[i] = polygon[i].reverse()
-              }
-            })
 
             if (coordinates.length === 0) {
               minuend = null
