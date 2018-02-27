@@ -45,6 +45,10 @@ Send any warnings (normally written to `stderr`) straight to `/dev/null`.
 
 ## Changelog
 
+### 0.3
+
+* switch backend to [polygon-clipping](https://www.npmjs.com/package/polygon-clipping)
+
 ### 0.2.1
 
 * set up CI: travis, coveralls
