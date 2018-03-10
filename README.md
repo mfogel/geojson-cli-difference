@@ -1,3 +1,5 @@
+## Deprecated: Please use [geojson-clipping](https://github.com/mfogel/geojson-clipping) instead.
+
 # geojson-cli-difference
 
 Subtract Polygons & MultiPolygons in your GeoJSON files from each other.
@@ -44,6 +46,10 @@ This feature can be used as a performance boost in the case when trying to emplo
 Send any warnings (normally written to `stderr`) straight to `/dev/null`.
 
 ## Changelog
+
+### 0.3.1
+
+* Deprecate in favor of [geojson-clipping](https://github.com/mfogel/geojson-clipping)
 
 ### 0.3
 
